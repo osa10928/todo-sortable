@@ -21,7 +21,7 @@ type BaseTouchableProps = Pick<
 
 export interface OnPushProps {
     checked: boolean,
-    dataKey?: number | string
+    dataKey?: number | string | object
 }
 
 export interface IBouncyCheckboxProps extends BaseTouchableProps {
@@ -52,7 +52,7 @@ export interface IBouncyCheckboxProps extends BaseTouchableProps {
     iconImageStyle?: StyleProp<ImageStyle>;
     textContainerStyle?: StyleProp<ViewStyle>;
     checkIconImageSource?: ImageSourcePropType;
-    dataKey?: number | string;
+    dataKey?: number | string | object;
     onPress?: ({checked, dataKey}: OnPushProps) => void;
 }
 

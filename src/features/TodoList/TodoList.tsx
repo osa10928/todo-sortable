@@ -10,6 +10,10 @@ import {TODOSPRESET} from "../../configs/todos.config";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import MyBouncyCheckbox, {OnPushProps} from "../MyBouncyCheckbox/MyBouncyCheckbox";
 import {GestureResponderEvent} from "react-native/Libraries/Types/CoreEventTypes";
+import {useAppDispatch, useAppSelector} from "../../redux/hooks";
+import {addToTodoList, setInputText, setTodoList, TodoListState} from "./TodoListSlice";
+import {useSelector} from "react-redux";
+import {CombinedState} from "@reduxjs/toolkit";
 
 interface TodoFlatListProperties {
     item: Todo,
@@ -18,22 +22,17 @@ interface TodoFlatListProperties {
     isActive: boolean
 }
 
-interface CheckBoxOnPress {
-    event?: GestureResponderEvent
-}
-
 const TodoList = () => {
-    const [text, setText] = useState('');
-    const [data, setData] = useState<Todo[]>(TODOSPRESET)
-
-    let listItemRef: BouncyCheckbox | null = null;
+    const dispatch = useAppDispatch();
+    const inputText = useAppSelector(state => state.todoList.inputValue);
+    const todoList = useAppSelector(state => state.todoList.todoList);
 
     const handleTextInput = (input: string) => {
-        setText(input);
+        dispatch(setInputText(input));
     };
 
     const handleAddTodo = () => {
-        const todo = text.trim();
+        const todo = inputText.trim();
         if (!todo) return;
 
         const newTodo = {
@@ -42,32 +41,30 @@ const TodoList = () => {
             isCompleted: false
         }
 
-        setData(data.concat(newTodo));
-        setText('');
+        dispatch(addToTodoList(newTodo));
     };
 
     const handleOnDragEnd = (params: {data: Todo[]}) => {
-        setData(params.data)
+        dispatch(setTodoList(params.data));
     }
 
     const handleCheckTodo = ({checked, dataKey}: OnPushProps) => {
-        const newData: Todo[] = data.map(item => {
-            if (item.key === dataKey) item.isCompleted = checked;
-            return item;
-        })
-        setData(newData);
+        const newTodo = dataKey as Todo;
+        newTodo.isCompleted = checked;
+        dispatch(setTodoList(todoList));
     }
 
     const handleClearTodoItem = (item: Todo) => {
-        const newData = data.filter(itemInList => !(itemInList === item));
-        setData(newData);
+        const newTodo = todoList.filter(itemInList => !(itemInList === item));
+        dispatch(setTodoList(newTodo));
     }
 
-    const bouncyCheckbox = (index: number | string | undefined): ReactElement => {
+    const bouncyCheckbox = (index?: number | string): ReactElement => {
+        const todoItem = todoList.find(todo => todo.key === index);
         return (
             <MyBouncyCheckbox
                     disableText={true}
-                    dataKey={index}
+                    dataKey={todoItem}
                     onPress={handleCheckTodo}
             />
         )
@@ -101,7 +98,7 @@ const TodoList = () => {
         <View style={[styles.container]}>
             <Header>Sortable Todo</Header>
             <Input
-                value={text}
+                value={inputText}
                 outline={true}
                 onChangeText={handleTextInput}
                 onSubmitEditing={handleAddTodo}
@@ -110,7 +107,8 @@ const TodoList = () => {
                 style={styles.input}
             />
             <DraggableFlatList
-                data={data}
+                data={todoList}
+                extraData={todoList}
                 keyExtractor={(item) => item.key}
                 renderItem={renderItem}
                 onDragEnd={handleOnDragEnd}
